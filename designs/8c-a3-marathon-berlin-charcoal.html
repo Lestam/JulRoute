@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Race Posters — real maps, A3, glued 3D track</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="assets/tracks.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@300;400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; background:#e6e5e1; font-family:'Space Grotesk',sans-serif; }
+  a { color:#c5402f; text-decoration:none; }
+  a:hover { color:#a12f21; }
+
+  /* A3 = 297 × 420 mm at 3 px/mm */
+  .poster { width:891px; height:1260px; position:relative; overflow:hidden; isolation:isolate;
+            background:var(--paper); box-shadow:0 34px 80px -34px rgba(30,28,22,0.55); }
+  .over { position:absolute; z-index:3; }
+  /* the glued 3D-printed part sits ABOVE the printed sheet and its lettering */
+  .part { position:absolute; z-index:6; pointer-events:none; overflow:visible; }
+  .mapimg { width:100%; height:100%; object-fit:cover; display:block; }
+
+  /* printed-map treatments, applied to the committed map plate */
+  .tiles-paper  .mapimg { filter:grayscale(1) contrast(1.2) brightness(1.06); opacity:var(--mapOpacity); }
+  .tiles-mono   .mapimg { filter:grayscale(1) contrast(1.4); opacity:var(--mapOpacity); }
+  .tiles-dark   .mapimg { filter:grayscale(1) invert(1) brightness(0.82) contrast(1.15); opacity:var(--mapOpacity); }
+  .tiles-tinted .mapimg { filter:grayscale(1) invert(1) brightness(0.7) contrast(1.2); opacity:calc(var(--mapOpacity) * 0.68); }
+
+  .k { font-family:'Space Mono',monospace; letter-spacing:0.16em; text-transform:uppercase; }
+  .badge { font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:0.12em;
+           background:#20201d; color:#f6f4ef; padding:5px 11px; border-radius:3px; }
+  .badge-note { font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.18em;
+                text-transform:uppercase; color:#7a776f; }
+  .opt { display:flex; flex-direction:column; gap:16px; align-items:center; }
+  .opt-head { display:none; align-items:center; gap:12px; align-self:flex-start; max-width:891px; flex-wrap:wrap; }
+  .row { display:flex; flex-wrap:wrap; gap:64px; align-items:flex-start; justify-content:center; }
+  h2.sec { font-family:'Spectral',serif; font-weight:500; font-size:30px; line-height:1.1;
+           color:#20201d; margin:0 0 10px; letter-spacing:-0.01em; }
+</style>
+</head>
+<body>
+
+<section style="background:#e6e5e1;padding:48px;display:flex;justify-content:center;">
+  <div class="row" id="row1"></div>
+  <div id="row2" style="display:none;"></div>
+</section>
+
+<div id="tweaks-mount"></div>
+
+<script>
+/* ---------------------------------------------------------------- data ---- */
+const ATTRIB = '© OpenStreetMap contributors';
+
+const RACES = {
+  '4k': {
+    title:'De Pijp 4K', city:'Amsterdam', country:'NL', geo:'52.354°N 4.891°E',
+    head:'De Pijp<br>4K Run', plate:'assets/map-4k.png',
+    athlete:'Alex Runner', date:'12.04.2026', dateLong:'12 April 2026',
+    time:'17:39', timeLong:'00:17:39', pace:'4:36 min/km', elev:'12 m', bib:'2041',
+    label:'4 km'
+  },
+  '10k': {
+    title:'Copenhagen Lakes 10K', city:'København', country:'DK', geo:'55.686°N 12.567°E',
+    head:'Køben<br>havn', plate:'assets/map-10k.png',
+    athlete:'Alex Runner', date:'24.05.2026', dateLong:'24 May 2026',
+    time:'47:12', timeLong:'00:47:12', pace:'4:43 min/km', elev:'38 m', bib:'8877',
+    label:'10 km'
+  },
+  '42k': {
+    title:'Berlin Marathon', city:'Berlin', country:'DE', geo:'52.516°N 13.377°E',
+    head:'Berlin', plate:'assets/map-42k.png',
+    athlete:'Alex Runner', date:'27.09.2026', dateLong:'27 September 2026',
+    time:'3:42:58', timeLong:'03:42:58', pace:'5:16 min/km', elev:'221 m', bib:'14303',
+    fixedKm:'42,195 km', label:'Marathon'
+  }
+};
+
+const SCHEMES = {
+  cobalt:   { paper:'#1f4fd8', ink:'#ffffff', muted:'#c7d6ff', accent:'#ffd84d',
+              trackTop:'#ffffff', trackSide:'#9aa8c6', trackLit:'#ffffff', shadow:'#0b1b46',
+              shadowOpacity:0.5, tiles:'tinted', mapPlate:'#183aa0' },
+  bone:     { paper:'#efece3', ink:'#1b1a16', muted:'#8d8577', accent:'#c8452f',
+              trackTop:'#c8452f', trackSide:'#7e2718', trackLit:'#ef8a76', shadow:'#2a2118',
+              shadowOpacity:0.34, tiles:'paper', mapPlate:'#e6e2d6' },
+  charcoal: { paper:'#2b2c2e', ink:'#f4f2ee', muted:'#8f9093', accent:'#d8352a',
+              trackTop:'#d8352a', trackSide:'#7c1a13', trackLit:'#f47f70', shadow:'#000000',
+              shadowOpacity:0.55, tiles:'dark', mapPlate:'#232426' },
+  forest:   { paper:'#12362b', ink:'#eef5ee', muted:'#7fa892', accent:'#c6e86a',
+              trackTop:'#c6e86a', trackSide:'#6d8a2e', trackLit:'#e8f7ae', shadow:'#04150f',
+              shadowOpacity:0.55, tiles:'dark', mapPlate:'#0d2a21' },
+  silver:   { paper:'#26282b', ink:'#f2f3f5', muted:'#9a9ea4', accent:'#dfe3e8',
+              trackTop:'#dfe3e8', trackSide:'#7d838b', trackLit:'#ffffff', shadow:'#000000',
+              shadowOpacity:0.6, tiles:'dark', mapPlate:'#1f2124' },
+  cream:    { paper:'#f4efe2', ink:'#17235c', muted:'#7b83a8', accent:'#1f4fd8',
+              trackTop:'#1f4fd8', trackSide:'#0f2b7d', trackLit:'#6d92f2', shadow:'#2a2c46',
+              shadowOpacity:0.3, tiles:'paper', mapPlate:'#e9e3d3' }
+};
+
+const POSTERS = [
+  { id:'8c', row:1, race:'42k', layout:'editorial', scheme:'charcoal', note:'Marathon · Berlin · charcoal editorial' }
+];
+
+function distText(key, upper){
+  const r = RACES[key];
+  if (r.fixedKm) return r.fixedKm;
+  const km = TRACKS[key].km;
+  return km.toFixed(2).replace('.',',') + (upper ? ' KM' : ' km');
+}
+function scaleText(key){
+  const m = TRACKS[key].scaleMetres;
+  return (m >= 1000 ? (Math.round(m/100)/10) + ' km' : Math.round(m/10)*10 + ' m') + ' / 40 mm';
+}
+
+/* ------------------------------------- the glued part, drawn above the sheet */
+const SVGNS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs){
+  const n = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  return n;
+}
+function paintPart(svg, pts){
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  const w = STATE.trackWidth, depth = STATE.trackDepth;
+  const d = pts.map(p => p[0]+','+p[1]).join(' ');
+  const line = (stroke, width, extra) => svgEl('polyline', Object.assign({
+    points:d, fill:'none', stroke:stroke, 'stroke-width':width,
+    'stroke-linecap':'round', 'stroke-linejoin':'round'
+  }, extra || {}));
+
+  // shadow the printed part casts on the paper
+  svg.appendChild(line('var(--trackShadow)', w, { opacity:'var(--shadowOpacity)',
+    transform:`translate(${depth+3} ${depth+6})`, filter:'blur(4px)' }));
+  // extruded side wall
+  for (let i=depth;i>=1;i--) svg.appendChild(line('var(--trackSide)', w, { transform:`translate(0 ${i})` }));
+  // top face + lit edge
+  svg.appendChild(line('var(--trackTop)', w));
+  svg.appendChild(line('var(--trackLit)', Math.max(2, w*0.24), { opacity:'0.85', transform:'translate(-0.5 -1.5)' }));
+
+  // start / finish caps, part of the same printed piece
+  const a = pts[0], b = pts[pts.length-1], rr = w*0.62;
+  svg.appendChild(svgEl('circle', { cx:a[0], cy:a[1], r:rr, fill:'var(--trackShadow)',
+    opacity:'var(--shadowOpacity)', transform:`translate(${depth+3} ${depth+6})`, filter:'blur(4px)' }));
+  for (let i=depth;i>=1;i--)
+    svg.appendChild(svgEl('circle', { cx:a[0], cy:a[1], r:rr, fill:'var(--trackSide)', transform:`translate(0 ${i})` }));
+  svg.appendChild(svgEl('circle', { cx:a[0], cy:a[1], r:rr, fill:'var(--paper)',
+    stroke:'var(--trackTop)', 'stroke-width':w*0.42 }));
+  svg.appendChild(svgEl('circle', { cx:b[0], cy:b[1], r:w*0.42, fill:'var(--trackTop)' }));
+}
+
+/* --------------------------------------------------------- poster views ----
+   Each layout gives the map plate its own zone with NO lettering inside it, and
+   every text block below the plate lives in ONE flow so blocks cannot collide. */
+function layoutHTML(p){
+  const r = RACES[p.race], t = TRACKS[p.race];
+
+  if (p.layout === 'circle') return `
+    <div class="over" style="top:78px;left:72px;right:72px;text-align:center;">
+      <div class="k" style="font-weight:700;font-size:13px;letter-spacing:0.26em;color:var(--muted);margin-bottom:18px;">${r.athlete} · ${r.date}</div>
+      <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:72px;line-height:0.92;
+                  text-transform:uppercase;color:var(--ink);letter-spacing:0.01em;">${r.head}</div>
+    </div>
+    <div data-mapbox style="position:absolute;top:368px;left:126px;width:${t.w}px;height:${t.h}px;border-radius:50%;
+                overflow:hidden;background:var(--mapPlate);z-index:0;isolation:isolate;">
+      <img class="mapimg" src="${r.plate}" alt="Printed map of ${r.city}">
+    </div>
+    <div class="over" style="top:1040px;left:72px;right:72px;text-align:center;">
+      <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:76px;line-height:0.9;
+                  color:var(--accent);letter-spacing:0.01em;">${r.time}</div>
+      <div style="display:flex;justify-content:center;gap:52px;margin-top:22px;">
+        <div><div class="k" style="font-size:11px;color:var(--muted);">Distance</div>
+             <div style="font-family:'Oswald',sans-serif;font-weight:600;font-size:30px;color:var(--ink);margin-top:5px;">${distText(p.race, true)}</div></div>
+        <div><div class="k" style="font-size:11px;color:var(--muted);">Pace</div>
+             <div style="font-family:'Oswald',sans-serif;font-weight:600;font-size:30px;color:var(--ink);margin-top:5px;">${r.pace}</div></div>
+        <div><div class="k" style="font-size:11px;color:var(--muted);">Elev</div>
+             <div style="font-family:'Oswald',sans-serif;font-weight:600;font-size:30px;color:var(--ink);margin-top:5px;">${r.elev}</div></div>
+      </div>
+      <div class="k" style="font-size:10px;letter-spacing:0.16em;color:var(--muted);margin-top:22px;">
+        ${r.city}, ${r.country} · ${r.geo} · <span data-scale>${scaleText(p.race)}</span> · ${ATTRIB}</div>
+    </div>`;
+
+  if (p.layout === 'plaque') return `
+    <div class="over" style="top:88px;left:80px;right:80px;">
+      <div class="k" style="font-size:13px;letter-spacing:0.34em;color:var(--accent);margin-bottom:20px;">${r.title} · ${r.dateLong}</div>
+      <div style="font-family:'Spectral',serif;font-weight:600;font-size:104px;line-height:0.9;
+                  color:var(--ink);letter-spacing:-0.03em;">${r.head}</div>
+    </div>
+    <div data-mapbox style="position:absolute;top:352px;left:0;right:0;height:${t.h}px;overflow:hidden;
+                background:var(--mapPlate);z-index:0;isolation:isolate;">
+      <img class="mapimg" src="${r.plate}" alt="Printed map of ${r.city}">
+    </div>
+    <div class="over" style="top:900px;left:80px;right:80px;">
+      <div style="font-family:'Spectral',serif;font-weight:600;font-size:64px;line-height:1;
+                  color:var(--ink);letter-spacing:-0.02em;">${r.athlete}</div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:20px;
+                  border-top:2px solid var(--ink);padding-top:16px;">
+        <div>
+          <div class="k" style="font-size:12px;color:var(--muted);">Finish time</div>
+          <div style="font-family:'Spectral',serif;font-weight:700;font-size:84px;line-height:0.86;
+                      color:var(--accent);letter-spacing:-0.03em;margin-top:8px;">${r.time}</div>
+        </div>
+        <div style="text-align:right;display:flex;flex-direction:column;gap:8px;">
+          <div><div class="k" style="font-size:11px;color:var(--muted);">Distance</div>
+               <div style="font-family:'Spectral',serif;font-weight:500;font-size:24px;color:var(--ink);">${distText(p.race)}</div></div>
+          <div><div class="k" style="font-size:11px;color:var(--muted);">Pace</div>
+               <div style="font-family:'Spectral',serif;font-weight:500;font-size:24px;color:var(--ink);">${r.pace}</div></div>
+          <div><div class="k" style="font-size:11px;color:var(--muted);">Elev</div>
+               <div style="font-family:'Spectral',serif;font-weight:500;font-size:24px;color:var(--ink);">${r.elev}</div></div>
+        </div>
+      </div>
+      <div class="k" style="font-size:10px;letter-spacing:0.18em;color:var(--muted);margin-top:20px;">
+        ${r.city}, ${r.country} · ${r.geo} · <span data-scale>${scaleText(p.race)}</span> · ${ATTRIB}</div>
+    </div>`;
+
+  return `
+    <div class="over" style="top:110px;left:80px;right:80px;">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;">
+        <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:92px;line-height:0.92;
+                    color:var(--ink);letter-spacing:-0.03em;">${r.city}</div>
+        <div class="k" style="font-size:16px;letter-spacing:0.1em;color:var(--muted);padding-bottom:12px;">/ ${r.label}</div>
+      </div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:20px;">
+        <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:42px;
+                    color:var(--ink);letter-spacing:-0.02em;">${r.athlete}</div>
+        <div class="k" style="font-size:14px;color:var(--muted);">Bib / ${r.bib}</div>
+      </div>
+    </div>
+    <div data-mapbox style="position:absolute;top:336px;left:0;right:0;height:${t.h}px;overflow:hidden;
+                background:var(--mapPlate);z-index:0;isolation:isolate;">
+      <img class="mapimg" src="${r.plate}" alt="Printed map of ${r.city}">
+    </div>
+    <div class="over" style="top:912px;left:80px;right:80px;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:108px;line-height:0.84;
+                  color:var(--accent);letter-spacing:-0.045em;">${r.timeLong}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px 32px;margin-top:22px;
+                  border-top:2px solid var(--ink);padding-top:16px;">
+        <div><div class="k" style="font-size:11px;color:var(--muted);">Distance</div>
+             <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:26px;color:var(--ink);margin-top:4px;">${distText(p.race)}</div></div>
+        <div><div class="k" style="font-size:11px;color:var(--muted);">Pace</div>
+             <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:26px;color:var(--ink);margin-top:4px;">${r.pace}</div></div>
+        <div><div class="k" style="font-size:11px;color:var(--muted);">Elev gain</div>
+             <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:26px;color:var(--ink);margin-top:4px;">${r.elev}</div></div>
+        <div><div class="k" style="font-size:11px;color:var(--muted);">Date</div>
+             <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:26px;color:var(--ink);margin-top:4px;">${r.date}</div></div>
+        <div><div class="k" style="font-size:11px;color:var(--muted);">Geo</div>
+             <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:26px;color:var(--ink);margin-top:4px;">${r.geo}</div></div>
+        <div><div class="k" style="font-size:11px;color:var(--muted);">Scale</div>
+             <div data-scale style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:26px;color:var(--ink);margin-top:4px;">${scaleText(p.race)}</div></div>
+      </div>
+      <div class="k" style="font-size:10px;letter-spacing:0.18em;color:var(--muted);margin-top:16px;">${ATTRIB}</div>
+    </div>`;
+}
+
+/* ------------------------------------------------------------- rendering --- */
+const INSTANCES = [];
+const TILE_CLASSES = ['tiles-paper','tiles-mono','tiles-dark','tiles-tinted'];
+let STATE = { scheme:null, trackWidth:15, trackDepth:7, mapOpacity:0.82, tiles:null, showScale:true };
+
+function applyScheme(inst){
+  const s = SCHEMES[STATE.scheme || inst.p.scheme];
+  const el = inst.poster;
+  el.style.setProperty('--paper', s.paper);
+  el.style.setProperty('--ink', s.ink);
+  el.style.setProperty('--muted', s.muted);
+  el.style.setProperty('--accent', s.accent);
+  el.style.setProperty('--mapPlate', s.mapPlate);
+  el.style.setProperty('--mapOpacity', STATE.mapOpacity);
+  el.style.setProperty('--trackTop', s.trackTop);
+  el.style.setProperty('--trackSide', s.trackSide);
+  el.style.setProperty('--trackLit', s.trackLit);
+  el.style.setProperty('--trackShadow', s.shadow);
+  el.style.setProperty('--shadowOpacity', s.shadowOpacity);
+  // swap only the treatment class
+  TILE_CLASSES.forEach(c => inst.mapbox.classList.remove(c));
+  inst.mapbox.classList.add('tiles-' + (STATE.tiles || s.tiles));
+}
+
+function buildPoster(p){
+  const wrap = document.createElement('div');
+  wrap.className = 'opt';
+  wrap.id = p.id;
+  wrap.innerHTML = `
+    <div class="opt-head"><span class="badge">${p.id.toUpperCase()}</span><span class="badge-note">${p.note}</span></div>
+    <div class="poster">${layoutHTML(p)}</div>`;
+  document.getElementById('row'+p.row).appendChild(wrap);
+
+  const poster = wrap.querySelector('.poster');
+  const inst = { p, poster, mapbox: poster.querySelector('[data-mapbox]'), pts: TRACKS[p.race].pts };
+  applyScheme(inst);
+
+  // the part's own SVG layer, placed over the map zone in poster coordinates
+  const box = inst.mapbox;
+  const svg = document.createElementNS(SVGNS, 'svg');
+  svg.setAttribute('class','part');
+  svg.setAttribute('width', TRACKS[p.race].w);
+  svg.setAttribute('height', TRACKS[p.race].h);
+  svg.style.left = box.offsetLeft + 'px';
+  svg.style.top = box.offsetTop + 'px';
+  poster.appendChild(svg);
+  inst.svg = svg;
+  paintPart(svg, inst.pts);
+  return inst;
+}
+
+function refresh(){
+  INSTANCES.forEach(inst => {
+    applyScheme(inst);
+    paintPart(inst.svg, inst.pts);
+    const el = inst.poster.querySelector('[data-scale]');
+    if (el) el.textContent = STATE.showScale ? scaleText(inst.p.race) : '';
+  });
+}
+window.__refreshPosters = refresh;
+window.__state = STATE;
+
+POSTERS.forEach(p => INSTANCES.push(buildPoster(p)));
+</script>
+
+<script type="text/plain" id="panel-src">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "scheme": "per poster",
+  "trackWidth": 15,
+  "trackDepth": 7,
+  "mapOpacity": 0.82,
+  "tiles": "per scheme",
+  "showScale": true
+}/*EDITMODE-END*/;
+
+const SCHEME_LABELS = ['per poster','cobalt','bone','charcoal','forest','silver','cream'];
+const TILE_LABELS = ['per scheme','paper','mono','dark','tinted'];
+
+function Panel(){
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  React.useEffect(() => {
+    const S = window.__state;
+    if (!S) return;
+    S.scheme = t.scheme === 'per poster' ? null : t.scheme;
+    S.tiles = t.tiles === 'per scheme' ? null : t.tiles;
+    S.trackWidth = Number(t.trackWidth);
+    S.trackDepth = Number(t.trackDepth);
+    S.mapOpacity = Number(t.mapOpacity);
+    S.showScale = !!t.showScale;
+    window.__refreshPosters && window.__refreshPosters();
+  }, [t.scheme, t.tiles, t.trackWidth, t.trackDepth, t.mapOpacity, t.showScale]);
+
+  return (
+    <React.Fragment>
+      <span data-tweaks-ready="1" style={{ display:'none' }} />
+      <TweaksPanel>
+        <TweakSection label="Colour" />
+        <TweakSelect label="Scheme" value={t.scheme} options={SCHEME_LABELS}
+                     onChange={v => setTweak('scheme', v)} />
+        <TweakSection label="Printed map" />
+        <TweakSelect label="Treatment" value={t.tiles} options={TILE_LABELS}
+                     onChange={v => setTweak('tiles', v)} />
+        <TweakSlider label="Map density" value={t.mapOpacity} min={0.3} max={1} step={0.02}
+                     onChange={v => setTweak('mapOpacity', v)} />
+        <TweakToggle label="Scale bar" value={t.showScale}
+                     onChange={v => setTweak('showScale', v)} />
+        <TweakSection label="Glued 3D track" />
+        <TweakSlider label="Width" value={t.trackWidth} min={9} max={24} step={1} unit="px"
+                     onChange={v => setTweak('trackWidth', v)} />
+        <TweakSlider label="Thickness" value={t.trackDepth} min={2} max={14} step={1} unit="px"
+                     onChange={v => setTweak('trackDepth', v)} />
+      </TweaksPanel>
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('tweaks-mount')).render(<Panel />);
+</script>
+
+<script>
+(async () => {
+  const compile = src => Babel.transform(src, {
+    presets:[['react', { runtime:'classic', pragma:'React.createElement', pragmaFrag:'React.Fragment' }]]
+  }).code;
+  try {
+    const shell = await (await fetch('tweaks-panel.jsx')).text();
+    (0, eval)(compile(shell));
+    (0, eval)(compile(document.getElementById('panel-src').textContent));
+  } catch (e) {
+    console.error('tweaks panel failed to mount', e && (e.message || e));
+  }
+})();
+</script>
+
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#2b2c2e"/><path d="M58 142 L82 120 L104 128 L126 100 L146 108 L156 72" fill="none" stroke="#d8352a" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</template>
+
+</body>
+</html>

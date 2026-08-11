@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>5E Split Data Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Oswald:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#e6e5e1; font-family:'Space Grotesk',sans-serif;
+         min-height:100vh; display:flex; align-items:center; justify-content:center; padding:48px; }
+  a { color:#c5402f; text-decoration:none; }
+  a:hover { color:#a12f21; }
+</style>
+</head>
+<body>
+
+      
+
+      <div style="padding:26px;background:linear-gradient(140deg, #14161a 0%, rgba(0,0,0,0.35) 100%), #14161a;box-shadow:0 40px 88px -44px rgba(30,28,22,0.6), inset 0 0 0 1px rgba(255,255,255,0.14);">
+        <div style="width:630px;height:900px;background:#ffffff;box-shadow:0 8px 22px -10px rgba(0,0,0,0.45);position:relative;overflow:hidden;display:flex;flex-direction:column;">
+        <!-- map top -->
+        <div style="position:relative;height:600px;overflow:hidden;background:#14161a;">
+          <img src="assets/map-city.svg" alt="" style="position:absolute;top:-230px;left:0;width:630px;opacity:0.45;display:block;">
+          <div style="position:absolute;top:44px;left:48px;right:48px;display:flex;align-items:flex-start;justify-content:space-between;">
+            <div>
+              <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:26px;line-height:1.05;color:#ffffff;letter-spacing:-0.01em;">Barcelona Marathon</div>
+              <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#f0a92e;margin-top:9px;">16 March 2026 · 42,195 km</div>
+            </div>
+            <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8d93;text-align:right;line-height:1.6;">41.3874°N<br>2.1686°E</div>
+          </div>
+          <svg width="630" height="600" viewBox="0 0 630 600" style="position:absolute;top:0;left:0;">
+            <g style="filter:drop-shadow(4px 7px 5px rgba(0,0,0,0.7));">
+              <path d="M118 476 C 174 442, 168 384, 224 356 C 282 328, 292 268, 350 250 C 404 234, 448 262, 472 306 C 496 352, 456 396, 406 412 C 352 430, 306 410, 274 440 C 244 468, 268 508, 312 520" fill="none" stroke="#f0a92e" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="118" cy="476" r="10" fill="#14161a" stroke="#f0a92e" stroke-width="7"/>
+              <circle cx="312" cy="520" r="8" fill="#f0a92e"/>
+            </g>
+          </svg>
+        </div>
+
+        <!-- data sheet bottom -->
+        <div style="flex:1;padding:40px 48px 0;display:flex;flex-direction:column;">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;">
+            <div>
+              <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#9a9791;">Official time</div>
+              <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:64px;line-height:0.9;color:#14161a;letter-spacing:-0.03em;margin-top:8px;">3:42:58</div>
+            </div>
+            <div style="text-align:right;padding-bottom:8px;">
+              <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:22px;color:#14161a;line-height:1;">Alex Runner</div>
+              <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#9a9791;margin-top:8px;">Barcelona, Spain</div>
+            </div>
+          </div>
+
+          <div style="margin-top:34px;display:flex;border-top:2px solid #14161a;padding-top:16px;">
+            <div style="flex:1;">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#9a9791;">Distance</div>
+              <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:19px;color:#14161a;margin-top:4px;">42,195 km</div>
+            </div>
+            <div style="flex:1;">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#9a9791;">Avg pace</div>
+              <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:19px;color:#14161a;margin-top:4px;">5:16 /km</div>
+            </div>
+            <div style="flex:1;">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#9a9791;">Elev gain</div>
+              <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:19px;color:#14161a;margin-top:4px;">287 m</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    
+</body>
+</html>

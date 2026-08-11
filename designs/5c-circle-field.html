@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>5C Circle Field</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Oswald:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#e6e5e1; font-family:'Space Grotesk',sans-serif;
+         min-height:100vh; display:flex; align-items:center; justify-content:center; padding:48px; }
+  a { color:#c5402f; text-decoration:none; }
+  a:hover { color:#a12f21; }
+</style>
+</head>
+<body>
+
+      
+
+      <div style="padding:26px;background:linear-gradient(140deg, #ffffff33 0%, #ffd84d 60%), #ffd84d;box-shadow:0 40px 88px -44px rgba(30,28,22,0.6), inset 0 0 0 1px rgba(0,0,0,0.10);">
+        <div style="width:630px;height:900px;background:#1f4fd8;box-shadow:0 8px 22px -10px rgba(0,0,0,0.45);position:relative;overflow:hidden;">
+        <!-- printed map circle -->
+        <div style="position:absolute;top:262px;left:38px;width:470px;height:470px;border-radius:50%;overflow:hidden;background:#1a41b4;">
+          <img src="assets/map-city-2.svg" alt="" style="width:470px;height:470px;opacity:0.42;display:block;">
+        </div>
+
+        <div style="position:absolute;top:112px;left:298px;right:52px;">
+          <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#c7d6ff;margin-bottom:16px;">Alex Runner</div>
+          <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:44px;line-height:0.94;text-transform:uppercase;color:#ffffff;letter-spacing:0.01em;">Barce<br>lona<br>Mara<br>thon</div>
+          <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:30px;letter-spacing:0.06em;color:#ffd84d;margin-top:22px;">42,195 KM</div>
+          <div style="margin-top:20px;display:flex;flex-direction:column;gap:5px;font-family:'Space Mono',monospace;font-weight:700;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#ffffff;">
+            <span>16.03.2026</span>
+            <span>3 h 42 min</span>
+            <span>5:16 min/km</span>
+            <span>Elev 287 m</span>
+            <span>Barcelona, ES</span>
+          </div>
+        </div>
+
+        <!-- raised route, escaping the circle -->
+        <svg width="630" height="900" viewBox="0 0 630 900" style="position:absolute;top:0;left:0;">
+          <g style="filter:drop-shadow(4px 8px 6px rgba(0,0,0,0.45));">
+            <path d="M96 212 C 112 268, 84 302, 118 348 C 156 400, 132 448, 176 494 C 222 542, 200 592, 252 632 C 306 674, 292 726, 344 766 C 380 794, 404 806, 430 838" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="96" cy="212" r="9" fill="#1f4fd8" stroke="#ffffff" stroke-width="6"/>
+            <circle cx="430" cy="838" r="9" fill="#1f4fd8" stroke="#ffffff" stroke-width="6"/>
+          </g>
+        </svg>
+      </div>
+      </div>
+    
+</body>
+</html>
